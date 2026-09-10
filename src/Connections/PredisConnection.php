@@ -47,16 +47,14 @@ class PredisConnection extends LaravelPredisConnection
      * @param Client $client          The Redis client to wrap.
      * @param array  $sentinelOptions Sentinel-specific connection options.
      */
-    public function __construct(Client $client, array $sentinelOptions = [ ])
+    public function __construct(Client $client, array $sentinelOptions = [])
     {
         parent::__construct($client);
 
         // Set the Sentinel-specific connection options on the Predis Client
         // connection and the current instance of this class.
         foreach ($sentinelOptions as $option => $value) {
-            DynamicMethod::parseFromUnderscore($option)
-                ->prepend('set')
-                ->callOn($this, [ $value ]);
+            DynamicMethod::parseFromUnderscore($option)->prepend('set')->callOn($this, [$value]);
         }
     }
 
@@ -136,13 +134,10 @@ class PredisConnection extends LaravelPredisConnection
      *
      * @return void
      */
-    public function createSubscription(
-        $channels,
-        Closure $callback,
-        $method = 'subscribe'
-    ) {
+    public function createSubscription($channels, Closure $callback, $method = 'subscribe')
+    {
         $this->retryOnFailure(function () use ($method, $channels, $callback) {
-            $loop = $this->pubSubLoop([ $method => (array) $channels ]);
+            $loop = $this->pubSubLoop([$method => (array) $channels]);
 
             if ($method === 'psubscribe') {
                 $messageKind = 'pmessage';
@@ -196,7 +191,7 @@ class PredisConnection extends LaravelPredisConnection
      * result for each command executed during the transaction. If no callback
      * provided, returns an instance of the Predis transaction abstraction.
      */
-    public function transaction(callable $callback = null)
+    public function transaction(?callable $callback = null)
     {
         return $this->retryOnFailure(function () use ($callback) {
             return $this->getMaster()->transaction($callback);
