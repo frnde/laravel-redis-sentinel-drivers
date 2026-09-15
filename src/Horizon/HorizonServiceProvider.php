@@ -42,10 +42,8 @@ class HorizonServiceProvider extends ServiceProvider
      * @param ConfigurationLoader $config Loads the package's configuration and
      * provides configuration values.
      */
-    public function __construct(
-        Container $app,
-        ConfigurationLoader $config = null
-    ) {
+    public function __construct(Container $app, ?ConfigurationLoader $config = null)
+    {
         parent::__construct($app);
 
         if ($config === null) {
@@ -62,7 +60,7 @@ class HorizonServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        if (! $this->config->shouldIntegrateHorizon) {
+        if (!$this->config->shouldIntegrateHorizon) {
             return;
         }
 
@@ -76,7 +74,7 @@ class HorizonServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        if (! $this->config->shouldIntegrateHorizon) {
+        if (!$this->config->shouldIntegrateHorizon) {
             return;
         }
 
@@ -97,13 +95,21 @@ class HorizonServiceProvider extends ServiceProvider
      */
     protected function registerServices()
     {
-        $this->app->bindIf('redis-sentinel', function ($app) {
-            return VersionedManagerFactory::make($this->app, $this->config);
-        }, true);
+        $this->app->bindIf(
+            'redis-sentinel',
+            function ($app) {
+                return VersionedManagerFactory::make($this->app, $this->config);
+            },
+            true,
+        );
 
-        $this->app->bindIf('redis-sentinel.manager', function ($app) {
-            return $app->make('redis-sentinel')->getVersionedManager();
-        }, true);
+        $this->app->bindIf(
+            'redis-sentinel.manager',
+            function ($app) {
+                return $app->make('redis-sentinel')->getVersionedManager();
+            },
+            true,
+        );
     }
 
     /**
@@ -117,13 +123,13 @@ class HorizonServiceProvider extends ServiceProvider
     {
         // If we're using this package for Horizon only, we only register this
         // service provider, so nothing overrides Laravel's standard Redis API:
-        if (! $this->app->bound(RedisSentinelServiceProvider::class)) {
+        if (!$this->app->bound(RedisSentinelServiceProvider::class)) {
             return true;
         }
 
         // If we're already overriding Laravel's standard Redis API, we don't
         // need to rebind the "redis" service for Horizon.
-        return ! $this->config->shouldOverrideLaravelRedisApi;
+        return !$this->config->shouldOverrideLaravelRedisApi;
     }
 
     /**
@@ -138,8 +144,9 @@ class HorizonServiceProvider extends ServiceProvider
         // instance of the Redis service, we'll set up contextual bindings
         // for any declared so we don't need to update this package in the
         // future every time Horizon adds or removes one:
-        foreach ((new HorizonServiceBindings()) as $serviceClass) {
-            $this->app->when($serviceClass)
+        foreach (new HorizonServiceBindings() as $serviceClass) {
+            $this->app
+                ->when($serviceClass)
                 ->needs(RedisFactory::class)
                 ->give(function () {
                     return $this->app->make('redis-sentinel.manager');
